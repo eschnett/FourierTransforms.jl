@@ -9,7 +9,7 @@ function direct_ft!(X::AbstractVector{T}, x::AbstractVector{T}) where {T<:Comple
     for k in 1:N
         s = zero(T)
         for n in 1:N
-            s += cispi(-2 * (n - 1) * (k - 1) / RT(N)) * x[n]
+            s += cispi(-2 * ((n - 1) * (k - 1) % N) / RT(N)) * x[n]
         end
         X[k] = s
     end
@@ -71,10 +71,10 @@ function ditfft2!(X::AbstractVector{T}, x::AbstractVector{T}) where {T<:Complex}
         ditfft2!((@view X[(1 * N2 + 1):(2 * N2)]), (@view x[2:2:end]))
         for k in 1:N2
             ϕ = cispi(-2 * (k - 1) / RT(N))
-            p = X[k]
-            q = ϕ * X[k + N ÷ 2]
-            X[k] = p + q
-            X[k + N ÷ 2] = p - q
+            p = X[0 * N2 + k]
+            q = ϕ * X[1 * N2 + k]
+            X[0 * N2 + k] = p + q
+            X[1 * N2 + k] = p - q
         end
     end
     return X
@@ -90,21 +90,25 @@ function radix_fft!(X::AbstractVector{T}, x::AbstractVector{T}; radix::Int=2) wh
     RT = typeof(real(zero(T)))
     if N == 0
         # do nothing
-    elseif N == 1
-        X[1] = x[1]
+    elseif N ≤ radix
+        direct_ft!(X, x)
     else
-        N₁ = radix              # decimation in time
+        N₁ = radix              # aka "decimation in time"
         @assert N % N₁ == 0
         N₂ = N ÷ N₁
+        # TODO: Prevent allocation. Maybe implement in-place algorithm?
+        Y = similar(X)
+        x2 = reshape(x, (N₁, N₂))
+        X2 = reshape(X, (N₂, N₁))
+        Y2 = reshape(Y, (N₂, N₁))
         for n₁ in 1:N₁
-            fft!((@view X[(1 + (n₁ - 1) * N₂):(n₁ * N₂)]), (@view x[n₁:N₁:end]); radix=radix)
+            radix_fft!((@view Y2[:, n₁]), (@view x2[n₁, :]); radix=radix)
             for n₂ in 1:N₂
-                X[(n₁ - 1) * N₂ + n₂] *= cispi(-2 * (n₁ - 1) * (n₂ - 1) / RT(N))
+                Y2[n₂, n₁] *= cispi(-2 * (n₁ - 1) * (n₂ - 1) / RT(N))
             end
         end
         for n₂ in 1:N₂
-            error("CONTINUE HERE")
-            fft!((@view X[(1 + (n₁ - 1) * N₂):(n₁ * N₂)]), (@view x[n₁:N₁:end]); radix=radix)
+            radix_fft!((@view X2[n₂, :]), (@view Y2[n₂, :]); radix=radix)
         end
     end
     return X
