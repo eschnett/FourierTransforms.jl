@@ -1,3 +1,4 @@
+using Compat: cispi
 # using DoubleFloats
 using FFT
 using Random
