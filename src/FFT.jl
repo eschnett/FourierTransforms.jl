@@ -1,5 +1,8 @@
 module FFT
 
+# cispi
+using Compat
+
 ################################################################################
 
 function direct_ft!(X::AbstractVector{T}, x::AbstractVector{T}) where {T<:Complex}
