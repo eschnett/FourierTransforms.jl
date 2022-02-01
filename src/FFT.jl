@@ -84,9 +84,12 @@ ditfft2(x::AbstractVector) = ditfft2!(similar(x), x)
 
 ################################################################################
 
-function radix_fft!(X::AbstractVector{T}, x::AbstractVector{T}; radix::Int=2) where {T<:Complex}
+# X: output
+# Y: workspace
+# x: input (will be destroyed)
+function radix_fft!(X::AbstractVector{T}, Y::AbstractVector{T}, x::AbstractVector{T}; radix::Int=2) where {T<:Complex}
     N = length(x)
-    @assert length(X) == N
+    @assert length(X) == length(Y) == N
     RT = typeof(real(zero(T)))
     if N == 0
         # do nothing
@@ -97,23 +100,28 @@ function radix_fft!(X::AbstractVector{T}, x::AbstractVector{T}; radix::Int=2) wh
         @assert N % N₁ == 0
         N₂ = N ÷ N₁
         # TODO: Prevent allocation. Maybe implement in-place algorithm?
-        Y = similar(X)
         x2 = reshape(x, (N₁, N₂))
         X2 = reshape(X, (N₂, N₁))
         Y2 = reshape(Y, (N₂, N₁))
+        Z2 = reshape(x, (N₂, N₁))
         for n₁ in 1:N₁
-            radix_fft!((@view Y2[:, n₁]), (@view x2[n₁, :]); radix=radix)
+            radix_fft!((@view Y2[:, n₁]), (@view X2[:, n₁]), (@view x2[n₁, :]); radix=radix)
             for n₂ in 1:N₂
                 Y2[n₂, n₁] *= cispi(-2 * (n₁ - 1) * (n₂ - 1) / RT(N))
             end
         end
         for n₂ in 1:N₂
-            radix_fft!((@view X2[n₂, :]), (@view Y2[n₂, :]); radix=radix)
+            radix_fft!((@view X2[n₂, :]), (@view Z2[n₂, :]), (@view Y2[n₂, :]); radix=radix)
         end
     end
     return X
 end
 
+"x will contain output"
+radix_fft!(x::AbstractVector; radix::Int=2) = radix_fft!(x, similar(x), copy(x); radix=radix)
+"X will contain output, x will be preserved"
+radix_fft!(X::AbstractVector, x::AbstractVector; radix::Int=2) = radix_fft!(X, similar(x), copy(x); radix=radix)
+"x will be preserved"
 radix_fft(x::AbstractVector; radix=radix) = radix_fft!(similar(x), x; radix=radix)
 
 ################################################################################
