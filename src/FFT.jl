@@ -1,6 +1,7 @@
 module FFT
 
 using Compat: cispi
+using Primes
 
 ################################################################################
 
@@ -86,13 +87,37 @@ ditfft2(x::AbstractVector) = ditfft2!(similar(x), x)
 
 ################################################################################
 
+function choose_radix_sqrt(n::Integer)
+    @assert n ≥ 0
+    n ≤ 1 && return n
+    # Use a greedy algorithm to find the largest factor not larger than sqrt(n)
+    prime_factor_counts = factor(n)
+    prime_factors = sort!(collect(keys(prime_factor_counts)))
+    sqrt_n = isqrt(n)
+    radix = 1
+    for prime_factor in Iterators.reverse(Iterators.filter(≤(sqrt_n), prime_factors))
+        for count in 1:prime_factor_counts[prime_factor]
+            if radix * prime_factor ≤ sqrt_n
+                radix *= prime_factor
+            else
+                break
+            end
+        end
+    end
+    # Always return a radix larger than 1
+    radix == 1 && return n
+    return radix
+end
+
 # X: output
 # Y: workspace
 # x: input (will be destroyed)
-function radix_fft!(X::AbstractVector{T}, Y::AbstractVector{T}, x::AbstractVector{T}; radix::Int=2) where {T<:Complex}
+function radix_fft!(X::AbstractVector{T}, Y::AbstractVector{T}, x::AbstractVector{T};
+                    choose_radix=choose_radix_sqrt) where {T<:Complex}
     N = length(x)
     @assert length(X) == length(Y) == N
     RT = typeof(real(zero(T)))
+    radix = choose_radix(N)
     if N == 0
         # do nothing
     elseif N ≤ radix
@@ -101,30 +126,29 @@ function radix_fft!(X::AbstractVector{T}, Y::AbstractVector{T}, x::AbstractVecto
         N₁ = radix              # aka "decimation in time"
         @assert N % N₁ == 0
         N₂ = N ÷ N₁
-        # TODO: Prevent allocation. Maybe implement in-place algorithm?
         x2 = reshape(x, (N₁, N₂))
         X2 = reshape(X, (N₂, N₁))
         Y2 = reshape(Y, (N₂, N₁))
         Z2 = reshape(x, (N₂, N₁))
         for n₁ in 1:N₁
-            radix_fft!((@view Y2[:, n₁]), (@view X2[:, n₁]), (@view x2[n₁, :]); radix=radix)
+            radix_fft!((@view Y2[:, n₁]), (@view X2[:, n₁]), (@view x2[n₁, :]); choose_radix=choose_radix)
             for n₂ in 1:N₂
                 Y2[n₂, n₁] *= cispi(-2 * (n₁ - 1) * (n₂ - 1) / RT(N))
             end
         end
         for n₂ in 1:N₂
-            radix_fft!((@view X2[n₂, :]), (@view Z2[n₂, :]), (@view Y2[n₂, :]); radix=radix)
+            radix_fft!((@view X2[n₂, :]), (@view Z2[n₂, :]), (@view Y2[n₂, :]); choose_radix=choose_radix)
         end
     end
     return X
 end
 
 "x will contain output"
-radix_fft!(x::AbstractVector; radix::Int=2) = radix_fft!(x, similar(x), copy(x); radix=radix)
+radix_fft!(x::AbstractVector; kws...) = radix_fft!(x, similar(x), copy(x); kws...)
 "X will contain output, x will be preserved"
-radix_fft!(X::AbstractVector, x::AbstractVector; radix::Int=2) = radix_fft!(X, similar(x), copy(x); radix=radix)
+radix_fft!(X::AbstractVector, x::AbstractVector; kws...) = radix_fft!(X, similar(x), copy(x); kws...)
 "x will be preserved"
-radix_fft(x::AbstractVector; radix=radix) = radix_fft!(similar(x), x; radix=radix)
+radix_fft(x::AbstractVector; kws...) = radix_fft!(similar(x), x; kws...)
 
 ################################################################################
 

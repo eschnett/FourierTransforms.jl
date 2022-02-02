@@ -46,8 +46,8 @@ Random.seed!(100)
     for bits in 1:maxbits
         N = 2^bits
         x = randn(T, N)
-        X = FFT.radix_fft(x; radix=2)
-        x′ = conj(FFT.radix_fft(conj(X); radix=2) / N)
+        X = FFT.radix_fft(x)
+        x′ = conj(FFT.radix_fft(conj(X)) / N)
         @test x′ ≈ x
     end
 end
@@ -73,9 +73,11 @@ Random.seed!(100)
         end
         Xct2 = FFT.ditfft2(x)
         @test Xct2 ≈ X
+        Xr = FFT.radix_fft(x)
+        @test Xr ≈ X
         for radix in 2:8
             if N % radix == 0
-                Xr = FFT.radix_fft(x; radix=radix)
+                Xr = FFT.radix_fft(x; choose_radix=N -> radix)
                 @test Xr ≈ X
             end
         end
