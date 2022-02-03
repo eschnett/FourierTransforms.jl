@@ -90,6 +90,17 @@ ditfft2(x::AbstractVector) = ditfft2!(similar(x), x)
 function choose_radix_sqrt(n::Integer)
     @assert n ≥ 0
     n ≤ 1 && return n
+    # Handle special cases efficiently
+    if ispow2(n)
+        # Power of 2
+        return 2
+    end
+    # Power of 2 times a factor
+    p2 = trailing_zeros(n)
+    factor = n >> p2
+    if factor ∈ (3, 5, 7, 11, 13, 17, 19)
+        return factor
+    end
     # Use a greedy algorithm to find the largest factor not larger than sqrt(n)
     prime_factor_counts = factor(n)
     prime_factors = sort!(collect(keys(prime_factor_counts)))
@@ -154,8 +165,26 @@ radix_fft(x::AbstractVector; kws...) = radix_fft!(similar(x), x; kws...)
 
 export fft!, fft, inv_fft!, inv_fft
 
-fft!(X::AbstractVector, x::AbstractVector) = ditfft2!(X, x)
+"""
+    fft!(X::AbstractVector, x::AbstractVector)
 
+Calculate the Fourier transform of `x` and store it into `X`. `x` is
+not modified. Both vectors must have the same length and must have
+complex element types.
+
+See also: [`fft`](@ref), [`inv_fft!`](@ref).
+"""
+fft!(X::AbstractVector, x::AbstractVector) = radix_fft!(X, x)
+
+"""
+    inv_fft!(x::AbstractVector, X::AbstractVector)
+
+Calculate the inverse Fourier transform of `X` and store it into `x`.
+`X` is not modified. Both vectors must have the same length and must
+have complex element types.
+
+See also: [`inv_fft`](@ref), [`fft!`](@ref).
+"""
 function inv_fft!(X::AbstractVector{T}, x::AbstractVector{T}) where {T<:Complex}
     # TODO: Don't modify `x`
     x .= conj(x)
@@ -165,7 +194,28 @@ function inv_fft!(X::AbstractVector{T}, x::AbstractVector{T}) where {T<:Complex}
     return X
 end
 
+"""
+    X = fft(x::AbstractVector)
+    X::AbstractVector
+
+Calculate the Fourier transform of `x` and return it in a newly
+allocate vector. `x` is not modified. The element type of `x` must be
+a complex number type.
+
+See also: [`inv_fft`](@ref), [`fft!`](@ref).
+"""
 fft(x::AbstractVector) = fft!(similar(x), x)
+
+"""
+    x = inv_fft(X::AbstractVector)
+    x::AbstractVector
+
+Calculate the inverse Fourier transform of `X` and return it in a
+newly allocate vector. `X` is not modified. The element type of `X`
+must be a complex number type.
+
+See also: [`fft`](@ref), [`inv_fft!`](@ref).
+"""
 inv_fft(x::AbstractVector) = inv_fft!(similar(x), x)
 
 end
