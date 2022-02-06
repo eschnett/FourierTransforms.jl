@@ -1,4 +1,4 @@
-name = "FFT"
+name = "FourierTransforms"
 uuid = "e12684bc-438d-4bdc-9b38-afa7db36157b"
 authors = ["Erik Schnetter <schnetter@gmail.com>"]
 version = "0.1.0"

@@ -4,8 +4,8 @@
 push!(LOAD_PATH, "..")
 
 using Documenter
-using FFT
+using FourierTransforms
 
-makedocs(; sitename="FFT", format=Documenter.HTML(), modules=[FFT])
+makedocs(; sitename="FourierTransforms", format=Documenter.HTML(), modules=[FourierTransforms])
 
-deploydocs(; repo="github.com/eschnett/FFT.jl.git", devbranch="main", push_preview=true)
+deploydocs(; repo="github.com/eschnett/FourierTransforms.jl.git", devbranch="main", push_preview=true)

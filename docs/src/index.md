@@ -1,4 +1,4 @@
-# FFT.jl
+# FourierTransforms.jl
 
 Fast Fourier Transforms implemented in pure Julia.
 
@@ -22,7 +22,7 @@ and one that allocates its output.
 
 The Fourier Transform is a linear operator:
 ```Julia
-using FFT
+using FourierTransforms
 Random.seed!(100)
 
 T = Complex{BigFloat}

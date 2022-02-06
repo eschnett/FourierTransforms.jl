@@ -1,11 +1,11 @@
-# FFT.jl
+# FourierTransforms.jl
 
 Fast Fourier Transforms implemented in pure Julia.
 
-* [![Documenter](https://img.shields.io/badge/docs-dev-blue.svg)](https://eschnett.github.io/FFT.jl/dev)
+* [![Documenter](https://img.shields.io/badge/docs-dev-blue.svg)](https://eschnett.github.io/FourierTransforms.jl/dev)
 * [![GitHub
-  CI](https://github.com/eschnett/FFT.jl/workflows/CI/badge.svg)](https://github.com/eschnett/FFT.jl/actions)
-* [![Codecov](https://codecov.io/gh/eschnett/FFT.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/eschnett/FFT.jl)
+  CI](https://github.com/eschnett/FourierTransforms.jl/workflows/CI/badge.svg)](https://github.com/eschnett/FourierTransforms.jl/actions)
+* [![Codecov](https://codecov.io/gh/eschnett/FourierTransforms.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/eschnett/FourierTransforms.jl)
 
 The main goal of this package is to calculate Fourier Transforms for
 all Julia array types and size and element types with reasonable
@@ -24,7 +24,7 @@ this becomes inefficient if there are large prime factors.
 
 The Fourier Transform is a linear operator:
 ```Julia
-using FFT
+using FourierTransforms
 Random.seed!(100)
 
 T = Complex{BigFloat}
@@ -46,3 +46,9 @@ Z = fft(z);
 # Check linearity
 println("Error: ", maximum(abs.(α * X + Y - Z)))
 ```
+
+## Related Packages
+
+- [FFTW.jl](https://github.com/JuliaMath/FFTW.jl)
+- [FourierTransforms.jl](https://github.com/JuliaComputing/FourierTransforms.jl)
+  (unregistered, apparently unmaintained)

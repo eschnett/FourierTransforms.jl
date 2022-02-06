@@ -1,8 +1,10 @@
 using Compat: cispi
 # using DoubleFloats
-using FFT
+using FourierTransforms
 using Random
 using Test
+
+const FT = FourierTransforms
 
 # `DoubleFloat` does not work: <https://github.com/JuliaMath/DoubleFloats.jl/issues/139>
 const Types = [Complex{Float32}, Complex{Float64}, Complex{BigFloat}]
@@ -22,8 +24,8 @@ Random.seed!(100)
     for bits in 1:maxbits
         N = 2^bits
         x = randn(T, N)
-        X = FFT.direct_ft(x)
-        x′ = conj(FFT.direct_ft(conj(X)) / N)
+        X = FT.direct_ft(x)
+        x′ = conj(FT.direct_ft(conj(X)) / N)
         @test x′ ≈ x
     end
 end
@@ -34,8 +36,8 @@ Random.seed!(100)
     for bits in 1:maxbits
         N = 2^bits
         x = randn(T, N)
-        X = FFT.ditfft2(x)
-        x′ = conj(FFT.ditfft2(conj(X)) / N)
+        X = FT.ditfft2(x)
+        x′ = conj(FT.ditfft2(conj(X)) / N)
         @test x′ ≈ x
     end
 end
@@ -46,8 +48,8 @@ Random.seed!(100)
     for bits in 1:maxbits
         N = 2^bits
         x = randn(T, N)
-        X = FFT.radix_fft(x)
-        x′ = conj(FFT.radix_fft(conj(X)) / N)
+        X = FT.radix_fft(x)
+        x′ = conj(FT.radix_fft(conj(X)) / N)
         @test x′ ≈ x
     end
 end
@@ -58,26 +60,26 @@ Random.seed!(100)
     for bits in 1:maxbits
         N = 2^bits
         x = randn(T, N)
-        X = FFT.direct_ft(x)
+        X = FT.direct_ft(x)
         if N == 1
-            X1 = FFT.direct_ft_1(x)
+            X1 = FT.direct_ft_1(x)
             @test X1 ≈ X
         end
         if N == 2
-            X2 = FFT.direct_ft_2(x)
+            X2 = FT.direct_ft_2(x)
             @test X2 ≈ X
         end
         if N == 4
-            X4 = FFT.direct_ft_4(x)
+            X4 = FT.direct_ft_4(x)
             @test X4 ≈ X
         end
-        Xct2 = FFT.ditfft2(x)
+        Xct2 = FT.ditfft2(x)
         @test Xct2 ≈ X
-        Xr = FFT.radix_fft(x)
+        Xr = FT.radix_fft(x)
         @test Xr ≈ X
         for radix in 2:8
             if N % radix == 0
-                Xr = FFT.radix_fft(x; choose_radix=N -> radix)
+                Xr = FT.radix_fft(x; choose_radix=N -> radix)
                 @test Xr ≈ X
             end
         end

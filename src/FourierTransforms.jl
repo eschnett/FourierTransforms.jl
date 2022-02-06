@@ -1,4 +1,4 @@
-module FFT
+module FourierTransforms
 
 using Compat: cispi
 using Primes
@@ -57,7 +57,7 @@ direct_ft_4(x::AbstractVector) = direct_ft_4!(similar(x), x)
 
 ################################################################################
 
-# <https://en.wikipedia.org/w/index.php?title=Cooley%E2%80%93Tukey_FFT_algorithm&oldid=1056450535>
+# <https://en.wikipedia.org/w/index.php?title=Cooley%E2%80%93Tukey_FFTur_algorithm&oldid=1056450535>
 function ditfft2!(X::AbstractVector{T}, x::AbstractVector{T}) where {T<:Complex}
     N = length(x)
     @assert length(X) == N
